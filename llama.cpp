@@ -5045,6 +5045,7 @@ struct llm_build_context {
         }
 
         for (int il = 0; il < n_layer; ++il) {
+        //for (int il = 0; il < 1; ++il) {
             struct ggml_tensor * inpSA = inpL;
 
             // norm

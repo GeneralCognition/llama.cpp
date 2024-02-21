@@ -437,6 +437,7 @@ enum ggml_op {
   GGML_OP_CONCAT,
   GGML_OP_SILU_BACK,
   GGML_OP_NORM, // normalize
+  GGML_OP_LUMINAL_DEBUG,
   GGML_OP_RMS_NORM,
   GGML_OP_RMS_NORM_BACK,
   GGML_OP_GROUP_NORM,
@@ -1087,6 +1088,9 @@ GGML_API struct ggml_tensor *ggml_rms_norm_back(struct ggml_context *ctx,
                                                 struct ggml_tensor *a,
                                                 struct ggml_tensor *b,
                                                 float eps);
+
+GGML_API void ggml_debug(struct ggml_context *ctx, struct ggml_cgraph *graph,
+                         struct ggml_tensor *tensor, const char *fmt, ...);
 
 // A: k columns, n rows => [ne03, ne02, n, k]
 // B: k columns, m rows  (i.e. we transpose it internally) => [ne03 * x, ne02 *
