@@ -4916,6 +4916,10 @@ static struct ggml_tensor * llm_build_kv(
     return cur;
 }
 
+void luminal_dump(ggml_tensor* tensor, const char* file_path) {
+    memcpy(tensor->dump_name, file_path, strlen(file_path));
+}
+
 struct llm_build_context {
     const llama_model    & model;
     const llama_context  & lctx;
@@ -5030,6 +5034,7 @@ struct llm_build_context {
 
         inpL = llm_build_inp_embd(ctx0, hparams, batch, model.tok_embd, lctx.inp_tokens, lctx.inp_embd, cb);
         cb(inpL, "inp_embd", -1);
+        // luminal_dump(inpL, "/Users/jafioti/Desktop/saves/embedded.bin");
 
         // inp_pos - contains the positions
         struct ggml_tensor * inp_pos = ggml_view_1d(ctx0, lctx.inp_pos, n_tokens, 0);
@@ -5044,8 +5049,8 @@ struct llm_build_context {
             llm_build_k_shift(ctx0, hparams, cparams, kv_self, gf, lctx.inp_K_shift, LLM_ROPE, n_ctx, freq_base, freq_scale, cb);
         }
 
-        // for (int il = 0; il < n_layer; ++il) {
-        for (int il = 0; il < 1; ++il) {
+        for (int il = 0; il < n_layer; ++il) {
+        //for (int il = 0; il < 1; ++il) {
             struct ggml_tensor * inpSA = inpL;
 
             // norm
@@ -5053,6 +5058,7 @@ struct llm_build_context {
                     model.layers[il].attn_norm, NULL,
                     LLM_NORM_RMS, cb, il);
             cb(cur, "attn_norm", il);
+            // luminal_dump(cur, "/Users/jafioti/Desktop/saves/normed.bin");
 
             // self-attention
             {
@@ -5063,6 +5069,7 @@ struct llm_build_context {
                     Qcur = ggml_add(ctx0, Qcur, model.layers[il].bq);
                     cb(Qcur, "Qcur", il);
                 }
+                // luminal_dump(Qcur, "/Users/jafioti/Desktop/saves/query.bin");
 
                 struct ggml_tensor * Kcur = ggml_mul_mat(ctx0, model.layers[il].wk, cur);
                 cb(Kcur, "Kcur", il);
@@ -5070,6 +5077,7 @@ struct llm_build_context {
                     Kcur = ggml_add(ctx0, Kcur, model.layers[il].bk);
                     cb(Kcur, "Kcur", il);
                 }
+                // luminal_dump(Kcur, "/Users/jafioti/Desktop/saves/key.bin");
 
                 struct ggml_tensor * Vcur = ggml_mul_mat(ctx0, model.layers[il].wv, cur);
                 cb(Vcur, "Vcur", il);
@@ -5077,6 +5085,7 @@ struct llm_build_context {
                     Vcur = ggml_add(ctx0, Vcur, model.layers[il].bv);
                     cb(Vcur, "Vcur", il);
                 }
+                // luminal_dump(Vcur, "/Users/jafioti/Desktop/saves/value.bin");
 
                 Qcur = ggml_rope_custom(
                     ctx0, ggml_reshape_3d(ctx0, Qcur, n_embd_head, n_head, n_tokens), inp_pos,
@@ -5084,6 +5093,7 @@ struct llm_build_context {
                     ext_factor, attn_factor, beta_fast, beta_slow
                 );
                 cb(Qcur, "Qcur", il);
+                // luminal_dump(Qcur, "/Users/jafioti/Desktop/saves/query_rope.bin");
 
                 Kcur = ggml_rope_custom(
                     ctx0, ggml_reshape_3d(ctx0, Kcur, n_embd_head, n_head_kv, n_tokens), inp_pos,
@@ -5091,11 +5101,13 @@ struct llm_build_context {
                     ext_factor, attn_factor, beta_fast, beta_slow
                 );
                 cb(Kcur, "Kcur", il);
+                // luminal_dump(Kcur, "/Users/jafioti/Desktop/saves/key_rope.bin");
 
                 cur = llm_build_kv(ctx0, model, hparams, kv_self, gf,
                         model.layers[il].wo, model.layers[il].bo,
                         Kcur, Vcur, Qcur, KQ_mask, nullptr, n_ctx, n_tokens, kv_head, n_kv, 1.0f/sqrtf(float(n_embd_head)), cb, il);
                 cb(cur, "kqv_out", il);
+                // luminal_dump(cur, "/Users/jafioti/Desktop/saves/attn_out.bin");
             }
 
             struct ggml_tensor * ffn_inp = ggml_add(ctx0, cur, inpSA);

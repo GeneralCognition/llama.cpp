@@ -1722,7 +1722,6 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "CONCAT",
     "SILU_BACK",
     "NORM",
-    "LUMINAL_DEBUG",
     "RMS_NORM",
     "RMS_NORM_BACK",
     "GROUP_NORM",
@@ -1785,7 +1784,7 @@ static const char * GGML_OP_NAME[GGML_OP_COUNT] = {
     "CROSS_ENTROPY_LOSS_BACK",
 };
 
-static_assert(GGML_OP_COUNT == 73, "GGML_OP_COUNT != 73");
+static_assert(GGML_OP_COUNT == 72, "GGML_OP_COUNT != 72");
 
 static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "none",
@@ -1809,7 +1808,6 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "concat(x, y)",
     "silu_back(x)",
     "norm(x)",
-    "luminal_debug(x)",
     "rms_norm(x)",
     "rms_norm_back(x)",
     "group_norm(x)",
@@ -1872,7 +1870,7 @@ static const char * GGML_OP_SYMBOL[GGML_OP_COUNT] = {
     "cross_entropy_loss_back(x,y)",
 };
 
-static_assert(GGML_OP_COUNT == 73, "GGML_OP_COUNT != 73");
+static_assert(GGML_OP_COUNT == 72, "GGML_OP_COUNT != 72");
 
 static_assert(GGML_OP_POOL_COUNT == 2, "GGML_OP_POOL_COUNT != 2");
 

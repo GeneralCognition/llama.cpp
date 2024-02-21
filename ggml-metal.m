@@ -846,61 +846,6 @@ static bool ggml_metal_graph_compute(
             //}
 
             switch (dst->op) {
-                case GGML_OP_LUMINAL_DEBUG:
-                    {
-                        // Commit command encoder / buffer / wait until completed so the id_src0 buffer is materialized
-                        [encoder endEncoding];
-                        [command_buffer commit];
-                        [command_buffer waitUntilCompleted];
-                        command_buffer = [ctx->queue commandBufferWithUnretainedReferences];
-                        encoder = [command_buffer computeCommandEncoderWithDescriptor: edesc];
-
-                        printf("Name: %s\n", src0->name);
-                        // Write tensor to file
-                        // Get n elements
-                        int64_t n_elements = 1;
-                        for (int i = 0; i < GGML_MAX_DIMS; ++i) {
-                            if (src0->ne[i] != 0) {
-                                n_elements *= src0->ne[i];
-                            }
-                        }
-                        void* contents = [id_src0 contents];
-                        printf("Metal buffer contents (%p): ", contents);
-                        for (int i = 0; i < 10; ++i) {
-                            printf("%f, ", ((float*)contents)[i]);
-                        }
-                        printf("\n");
-                        printf("Tensor data (%p): ", src0->data);
-                        void* data_contents = src0->data;
-                        for (int i = 0; i < 10; ++i) {
-                            printf("%f, ", ((float*)data_contents)[i]);
-                        }
-                        printf("\n");
-                        // Get file path
-                        const size_t str_len = dst->op_params[0];
-                        char *filePath = malloc((str_len + 1) * sizeof(char));
-                        for (size_t i = 0; i < str_len; ++i) {
-                            filePath[i] = (char)dst->op_params[i + 1];
-                        }
-                        filePath[str_len] = '\0';
-                        printf("File: %s\n", filePath);
-                        // Open the file in binary mode for writing
-                        remove(filePath);
-                        FILE *file = fopen(filePath, "wb");
-                        if (!file) {
-                            printf("\nfailed fopen\n");
-                        }
-
-                        // Write the entire array to the file in one go
-                        size_t numElementsWritten = fwrite(contents, sizeof(float), n_elements, file);
-
-                        // Check if the write was successful
-                        if (numElementsWritten != n_elements) {
-                            printf("\nError writing to the file.\n");
-                        }
-                        // Close the file
-                        fclose(file);
-                    } break;
                 case GGML_OP_CONCAT:
                     {
                         const int64_t nb = ne00;

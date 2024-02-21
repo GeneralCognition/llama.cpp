@@ -5,11 +5,13 @@
 #include <cassert>
 #include <cinttypes>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <ctime>
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <regex>
 #include <sstream>
 #include <string>
@@ -1514,6 +1516,67 @@ void llama_batch_add(struct llama_batch &batch, llama_token id, llama_pos pos,
   batch.n_tokens++;
 }
 
+static bool observe_compute(struct ggml_tensor *t, bool ask, void *user_data) {
+
+  // the scheduler is asking us if we want to observe this node
+  if (ask) {
+    return true;
+    // // check if name contains soft_max (customize to your needs)
+    // return strstr(t->name, "soft_max") != 0;
+  }
+
+  if (t->dump_name[0] == 0) {
+    return true;
+  }
+  // print the node info
+  printf("Path: %s", t->dump_name);
+  printf("%s: t->name = %32s, t->op = %12s, [%5d, %5d, %5d, %5d]\n", __func__,
+         t->name, ggml_op_name(t->op), (int)t->ne[0], (int)t->ne[1],
+         (int)t->ne[2], (int)t->ne[3]);
+
+  // this will copy the data to host memory (if needed)
+  static std::vector<float> t_data;
+
+  const bool is_host = ggml_backend_buffer_is_host(t->buffer);
+
+  if (!is_host) {
+    t_data.resize(ggml_nelements(t));
+    ggml_backend_tensor_get(t, t_data.data(), 0, ggml_nbytes(t));
+  }
+
+  const float *data = is_host ? (const float *)t->data : t_data.data();
+
+  int64_t n_elements = 1;
+  for (int i = 0; i < GGML_MAX_DIMS; ++i) {
+    if (t->ne[i] != 0) {
+      n_elements *= t->ne[i];
+    }
+  }
+
+  remove(t->dump_name);
+  FILE *file = fopen(t->dump_name, "wb");
+  if (!file) {
+    printf("\nfailed fopen\n");
+  }
+
+  // Write the entire array to the file in one go
+  size_t numElementsWritten = fwrite(data, sizeof(float), n_elements, file);
+
+  // Check if the write was successful
+  if ((int64_t)numElementsWritten != n_elements) {
+    printf("\nError writing to the file.\n");
+  }
+  // Close the file
+  fclose(file);
+  // print first row
+  for (int i = 0; i < 10; i++) {
+    printf("%f ", data[i]);
+  }
+  printf("\n");
+
+  return true;
+}
+
 std::tuple<struct llama_model *, struct llama_context *>
 llama_init_from_gpt_params(gpt_params &params) {
   auto mparams = llama_model_params_from_gpt_params(params);
@@ -1527,6 +1590,7 @@ llama_init_from_gpt_params(gpt_params &params) {
   }
 
   auto cparams = llama_context_params_from_gpt_params(params);
+  cparams.cb_eval = observe_compute;
 
   llama_context *lctx = llama_new_context_with_model(model, cparams);
   if (lctx == NULL) {
