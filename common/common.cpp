@@ -1560,7 +1560,7 @@ llama_init_from_gpt_params(gpt_params &params) {
 
     std::vector<llama_token> tmp = {
         llama_token_bos(model),
-        llama_token_eos(model),
+        // llama_token_eos(model),
     };
     llama_decode(lctx, llama_batch_get_one(
                            tmp.data(),

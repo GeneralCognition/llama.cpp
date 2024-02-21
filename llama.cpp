@@ -5044,8 +5044,8 @@ struct llm_build_context {
             llm_build_k_shift(ctx0, hparams, cparams, kv_self, gf, lctx.inp_K_shift, LLM_ROPE, n_ctx, freq_base, freq_scale, cb);
         }
 
-        for (int il = 0; il < n_layer; ++il) {
-        //for (int il = 0; il < 1; ++il) {
+        // for (int il = 0; il < n_layer; ++il) {
+        for (int il = 0; il < 1; ++il) {
             struct ggml_tensor * inpSA = inpL;
 
             // norm
