@@ -1528,6 +1528,12 @@ static bool observe_compute(struct ggml_tensor *t, bool ask, void *user_data) {
   if (t->dump_name[0] == 0) {
     return true;
   }
+  int64_t n_elements = 1;
+  for (int i = 0; i < GGML_MAX_DIMS; ++i) {
+    if (t->ne[i] != 0) {
+      n_elements *= t->ne[i];
+    }
+  }
   // print the node info
   printf("Path: %s", t->dump_name);
   printf("%s: t->name = %32s, t->op = %12s, [%5d, %5d, %5d, %5d]\n", __func__,
@@ -1545,13 +1551,6 @@ static bool observe_compute(struct ggml_tensor *t, bool ask, void *user_data) {
   }
 
   const float *data = is_host ? (const float *)t->data : t_data.data();
-
-  int64_t n_elements = 1;
-  for (int i = 0; i < GGML_MAX_DIMS; ++i) {
-    if (t->ne[i] != 0) {
-      n_elements *= t->ne[i];
-    }
-  }
 
   remove(t->dump_name);
   FILE *file = fopen(t->dump_name, "wb");
@@ -1590,7 +1589,8 @@ llama_init_from_gpt_params(gpt_params &params) {
   }
 
   auto cparams = llama_context_params_from_gpt_params(params);
-  cparams.cb_eval = observe_compute;
+  cparams.cb_eval =
+      observe_compute; // Way slow with this but needed for luminal dumps
 
   llama_context *lctx = llama_new_context_with_model(model, cparams);
   if (lctx == NULL) {
