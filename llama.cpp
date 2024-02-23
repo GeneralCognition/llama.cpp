@@ -5115,7 +5115,7 @@ struct llm_build_context {
                     ext_factor, attn_factor, beta_fast, beta_slow
                 );
                 cb(Qcur, "Qcur", il);
-                // luminal_dump(Qcur, "/Users/jafioti/Desktop/saves/query_rope%d.bin", il);
+                luminal_dump(Qcur, "/Users/jafioti/Desktop/saves/query_rope%d.bin", il);
 
                 Kcur = ggml_rope_custom(
                     ctx0, ggml_reshape_3d(ctx0, Kcur, n_embd_head, n_head_kv, n_tokens), inp_pos,
@@ -5123,13 +5123,13 @@ struct llm_build_context {
                     ext_factor, attn_factor, beta_fast, beta_slow
                 );
                 cb(Kcur, "Kcur", il);
-                // luminal_dump(Kcur, "/Users/jafioti/Desktop/saves/key_rope%d.bin", il);
+                luminal_dump(Kcur, "/Users/jafioti/Desktop/saves/key_rope%d.bin", il);
 
                 cur = llm_build_kv(ctx0, model, hparams, kv_self, gf,
                         model.layers[il].wo, model.layers[il].bo,
                         Kcur, Vcur, Qcur, KQ_mask, nullptr, n_ctx, n_tokens, kv_head, n_kv, 1.0f/sqrtf(float(n_embd_head)), cb, il);
                 cb(cur, "kqv_out", il);
-                // luminal_dump(cur, "/Users/jafioti/Desktop/saves/attn_out.bin");
+                luminal_dump(cur, "/Users/jafioti/Desktop/saves/attn_out.bin");
             }
 
             struct ggml_tensor * ffn_inp = ggml_add(ctx0, cur, inpSA);

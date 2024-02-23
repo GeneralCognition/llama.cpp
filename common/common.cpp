@@ -1520,13 +1520,9 @@ static bool observe_compute(struct ggml_tensor *t, bool ask, void *user_data) {
 
   // the scheduler is asking us if we want to observe this node
   if (ask) {
-    return true;
+    return t->dump_name[0] != 0;
     // // check if name contains soft_max (customize to your needs)
     // return strstr(t->name, "soft_max") != 0;
-  }
-
-  if (t->dump_name[0] == 0) {
-    return true;
   }
   int64_t n_elements = 1;
   for (int i = 0; i < GGML_MAX_DIMS; ++i) {
@@ -1535,10 +1531,10 @@ static bool observe_compute(struct ggml_tensor *t, bool ask, void *user_data) {
     }
   }
   // print the node info
-  printf("Path: %s", t->dump_name);
-  printf("%s: t->name = %32s, t->op = %12s, [%5d, %5d, %5d, %5d]\n", __func__,
-         t->name, ggml_op_name(t->op), (int)t->ne[0], (int)t->ne[1],
-         (int)t->ne[2], (int)t->ne[3]);
+  printf("Path: %s\n", t->dump_name);
+  printf("%s: t->name = %32s, t->op = %12s, [%5d, %5d, %5d, %5d] | %d\n",
+         __func__, t->name, ggml_op_name(t->op), (int)t->ne[0], (int)t->ne[1],
+         (int)t->ne[2], (int)t->ne[3], (int)n_elements);
 
   // this will copy the data to host memory (if needed)
   static std::vector<float> t_data;
@@ -1622,9 +1618,10 @@ llama_init_from_gpt_params(gpt_params &params) {
   {
     LOG("warming up the model with an empty run\n");
 
+    printf("EOS TOKEN: %d\n", llama_token_eos(model));
     std::vector<llama_token> tmp = {
         llama_token_bos(model),
-        // llama_token_eos(model),
+        llama_token_eos(model),
     };
     llama_decode(lctx, llama_batch_get_one(
                            tmp.data(),
